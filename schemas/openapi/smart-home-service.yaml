@@ -1,0 +1,356 @@
+openapi: 3.0.3
+info:
+  title: Home Management Service API
+  version: 1.0.0
+  description: Home structure, membership management and device provisioning (binding/unbinding/config).
+
+servers:
+  - url: http://localhost:8082
+
+tags:
+  - name: Homes
+  - name: Rooms
+  - name: Members
+  - name: Devices
+  - name: DeviceCatalog
+
+paths:
+  /homes:
+    post:
+      tags: [Homes]
+      summary: Create home
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateHomeRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Home' }
+        '400':
+          description: Validation error
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetails' }
+
+    get:
+      tags: [Homes]
+      summary: List homes for current user
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Homes list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Home' }
+
+  /homes/{homeId}:
+    get:
+      tags: [Homes]
+      summary: Get home details
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/HomeId' }]
+      responses:
+        '200':
+          description: Home details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Home' }
+        '404':
+          description: Home not found
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetails' }
+
+  /homes/{homeId}/rooms:
+    post:
+      tags: [Rooms]
+      summary: Create room
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/HomeId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateRoomRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Room' }
+
+    get:
+      tags: [Rooms]
+      summary: List rooms
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/HomeId' }]
+      responses:
+        '200':
+          description: Rooms list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Room' }
+
+  /homes/{homeId}/members/invite:
+    post:
+      tags: [Members]
+      summary: Invite member to home
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/HomeId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InviteMemberRequest' }
+      responses:
+        '201':
+          description: Invitation created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Invitation' }
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetails' }
+
+  /homes/{homeId}/members:
+    get:
+      tags: [Members]
+      summary: List home members
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/HomeId' }]
+      responses:
+        '200':
+          description: Members list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/HomeMember' }
+
+  /homes/{homeId}/devices/pairing/start:
+    post:
+      tags: [Devices]
+      summary: Start device pairing session
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/HomeId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StartPairingRequest' }
+      responses:
+        '200':
+          description: Pairing session started
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StartPairingResponse' }
+
+  /homes/{homeId}/devices:
+    get:
+      tags: [Devices]
+      summary: List devices bound to home
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/HomeId' }]
+      responses:
+        '200':
+          description: Devices list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/BoundDevice' }
+
+  /homes/{homeId}/devices/{deviceId}:
+    delete:
+      tags: [Devices]
+      summary: Unbind device from home
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/HomeId' }
+        - { $ref: '#/components/parameters/DeviceId' }
+      responses:
+        '204': { description: Device unbound }
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetails' }
+
+  /devices/{deviceId}/configure:
+    post:
+      tags: [Devices]
+      summary: Update device configuration
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/DeviceId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DeviceConfigRequest' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DeviceConfigResponse' }
+
+  /device-types:
+    get:
+      tags: [DeviceCatalog]
+      summary: List supported device types
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Device types
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/DeviceType' }
+
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+
+  parameters:
+    HomeId:
+      name: homeId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    DeviceId:
+      name: deviceId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  schemas:
+    CreateHomeRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, example: "My Home" }
+        address: { type: string, example: "Bishkek, Example street 10" }
+        region: { type: string, example: "Chuy" }
+
+    Home:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        address: { type: string }
+        region: { type: string }
+        createdAt: { type: string, format: date-time }
+
+    CreateRoomRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, example: "Living room" }
+        floor: { type: integer, example: 1 }
+
+    Room:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        homeId: { type: string, format: uuid }
+        name: { type: string }
+        floor: { type: integer }
+
+    InviteMemberRequest:
+      type: object
+      required: [email, role]
+      properties:
+        email: { type: string, format: email }
+        role: { type: string, enum: [OWNER, ADMIN, MEMBER, GUEST] }
+
+    Invitation:
+      type: object
+      properties:
+        invitationId: { type: string, format: uuid }
+        homeId: { type: string, format: uuid }
+        email: { type: string, format: email }
+        role: { type: string }
+        status: { type: string, example: "PENDING" }
+        createdAt: { type: string, format: date-time }
+
+    HomeMember:
+      type: object
+      properties:
+        userId: { type: string, format: uuid }
+        email: { type: string, format: email }
+        role: { type: string, enum: [OWNER, ADMIN, MEMBER, GUEST] }
+        joinedAt: { type: string, format: date-time }
+
+    StartPairingRequest:
+      type: object
+      required: [deviceTypeId]
+      properties:
+        deviceTypeId: { type: string, format: uuid }
+        roomId: { type: string, format: uuid, nullable: true }
+        displayName: { type: string, example: "Thermostat Hall" }
+
+    StartPairingResponse:
+      type: object
+      properties:
+        pairingCode: { type: string, example: "9F3A-2KLM" }
+        pairingSessionId: { type: string, format: uuid }
+        expiresAt: { type: string, format: date-time }
+
+    BoundDevice:
+      type: object
+      properties:
+        deviceId: { type: string, format: uuid }
+        homeId: { type: string, format: uuid }
+        roomId: { type: string, format: uuid, nullable: true }
+        displayName: { type: string }
+        status: { type: string, example: "BOUND" }
+        deviceType: { $ref: '#/components/schemas/DeviceType' }
+
+    DeviceConfigRequest:
+      type: object
+      properties:
+        displayName: { type: string }
+        roomId: { type: string, format: uuid, nullable: true }
+        configJson:
+          type: object
+          additionalProperties: true
+
+    DeviceConfigResponse:
+      type: object
+      properties:
+        deviceId: { type: string, format: uuid }
+        version: { type: integer }
+        updatedAt: { type: string, format: date-time }
+
+    DeviceType:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        category: { type: string, enum: [HEATING, LIGHTING, GATES, SURVEILLANCE] }
+        capabilities:
+          type: array
+          items: { type: string }
+        protocols:
+          type: array
+          items: { type: string }
+
+    ProblemDetails:
+      type: object
+      properties:
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        traceId: { type: string }
