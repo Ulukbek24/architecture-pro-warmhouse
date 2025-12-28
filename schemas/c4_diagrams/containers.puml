@@ -1,0 +1,95 @@
+@startuml
+title Smart Home Ecosystem — Container Diagram
+
+skinparam shadowing false
+skinparam DefaultFontName Arial
+skinparam DefaultFontSize 14
+skinparam ArrowColor #666666
+
+skinparam rectangle {
+  BackgroundColor #1F4E79
+  BorderColor #0B2C4D
+  FontColor white
+}
+skinparam database {
+  BackgroundColor #1F4E79
+  BorderColor #0B2C4D
+  FontColor white
+}
+skinparam actor {
+  BackgroundColor #1F4E79
+  BorderColor #0B2C4D
+  FontColor white
+}
+
+actor "Person\nUser\n\nВзаимодействует\nчерез веб-браузер" as user
+
+rectangle "Home Management System" as systemBoundary #transparent {
+
+  rectangle "API Gateway\n(Container)\n\nAPI Gateway (Nginx)\n\nУправляет запросами и маршрутизирует\nих на соответствующие сервисы" as gateway
+
+  rectangle "Auth Management\n(Container)" as authBox #transparent {
+      rectangle "Authentication Management Service\n(REST API)\n\nПроверяет подлинность пользователя\nи выдаёт access/refresh token" as authSvc
+  }
+
+  rectangle "Home Management\n(Container)" as homeBox #transparent {
+      rectangle "Home Management Service\n(REST API)\n\nУправление домом и устройствами:\nпривязка/отвязка, конфигурации,\nправа, комнаты" as homeSvc
+      database "Home Data\n(PostgreSQL)\n\nХранение домов, устройств,\nпривязок, конфигураций" as homeDb
+  }
+
+  rectangle "Temperature Management\n(Container)" as tempBox #transparent {
+      rectangle "Temperature Management Service\n(REST API)\n\nУправление температурой:\nкоманды и состояние отопления" as tempSvc
+      database "Temperature Data\n(PostgreSQL)\n\nСостояние отопления,\nистория температуры" as tempDb
+  }
+
+  rectangle "Light Management\n(Container)" as lightBox #transparent {
+      rectangle "Light Management Service\n(REST API)\n\nУправление освещением:\nвкл/выкл, яркость" as lightSvc
+      database "Light Data\n(PostgreSQL)\n\nСостояние света,\nистория изменений" as lightDb
+  }
+
+  rectangle "Videocameras Management\n(Container)" as videoBox #transparent {
+      rectangle "Videocameras Management Service\n(REST API)\n\nУправление видеокамерами:\nстрим, запись, доступ" as videoSvc
+      database "Videocameras Data\n(PostgreSQL)\n\nКамеры, стрим-сессии,\nзаписи и метаданные" as videoDb
+  }
+
+  rectangle "Gates Management\n(Container)" as gatesBox #transparent {
+      rectangle "Gates Management Service\n(REST API)\n\nУправление воротами:\nopen/close, lock/unlock" as gatesSvc
+      database "Gates Data\n(PostgreSQL)\n\nСостояние ворот,\nистория команд" as gatesDb
+  }
+
+
+  rectangle "Message Broker\n(Kafka)\n\nСобытийное взаимодействие\nмежду микросервисами" as kafka
+
+}
+
+
+user --> gateway : Отправляет запросы\nи получает ответы
+
+
+gateway --> authSvc : Запросы аутентификации\nи токенов
+gateway --> homeSvc : Запросы на управление домом
+gateway --> tempSvc : Запросы на управление температурой
+gateway --> lightSvc : Запросы на управление светом
+gateway --> videoSvc : Запросы на просмотр камер\nи управление записью
+gateway --> gatesSvc : Запросы на управление воротами
+
+
+homeSvc --> homeDb : CRUD / SQL
+tempSvc --> tempDb : CRUD / SQL
+lightSvc --> lightDb : CRUD / SQL
+videoSvc --> videoDb : CRUD / SQL
+gatesSvc --> gatesDb : CRUD / SQL
+
+
+homeSvc --> kafka : Публикует события:\nDeviceBoundToHome,\nDeviceUnbound,\nHomeMemberAdded
+
+tempSvc --> kafka : Публикует события:\nTemperatureStateUpdated,\nTemperatureMeasured
+lightSvc --> kafka : Публикует события:\nLightStateUpdated
+videoSvc --> kafka : Публикует события:\nCameraStateUpdated,\nRecordingFinished
+gatesSvc --> kafka : Публикует события:\nGateStateChanged
+
+kafka --> tempSvc : Читает события о привязке устройств\nи правах доступа
+kafka --> lightSvc : Читает события о привязке устройств\nи правах доступа
+kafka --> videoSvc : Читает события о привязке устройств\nи правах доступа
+kafka --> gatesSvc : Читает события о привязке устройств\nи правах доступа
+@enduml

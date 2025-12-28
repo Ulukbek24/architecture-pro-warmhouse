@@ -1,0 +1,73 @@
+@startuml
+title Home Service — Component Diagram
+
+skinparam shadowing false
+skinparam DefaultFontName Arial
+skinparam DefaultFontSize 14
+skinparam ArrowColor #444444
+
+skinparam rectangle {
+  BackgroundColor #1F4E79
+  BorderColor #0B2C4D
+  FontColor white
+}
+skinparam component {
+  BackgroundColor #1F4E79
+  BorderColor #0B2C4D
+  FontColor white
+}
+skinparam database {
+  BackgroundColor #1F4E79
+  BorderColor #0B2C4D
+  FontColor white
+}
+skinparam actor {
+  BackgroundColor #1F4E79
+  BorderColor #0B2C4D
+  FontColor white
+}
+
+actor "Person\nUser\n\nВзаимодействует\nчерез веб-браузер" as user
+
+rectangle "API Gateway\n(Container)\n\nAPI Gateway\n(Nginx)\n\nУправляет запросами и маршрутизирует\nих на соответствующие сервисы" as gateway
+
+user --> gateway : Отправляет запросы\nи получает ответы
+
+rectangle "Home service" as homeBoundary #transparent {
+
+  rectangle "Home service\n(Container)" as homeContainer #transparent {
+
+    component "HomeController\n(REST API)" as homeCtrl
+    component "DeviceCatalogController\n(REST API)" as catalogCtrl
+    component "DeviceProvisioningController\n(REST API)" as provCtrl
+
+    component "HomeManagementService\n(Use Cases)" as homeMgmtSvc
+    component "DeviceCatalogService\n(Use Cases)" as catalogSvc
+    component "DeviceProvisioningService\n(Use Cases)" as provSvc
+
+    component "HomeRepository" as homeRepo
+    component "DeviceRepository" as deviceRepo
+
+    database "HomeManagementDB\n(Postgres)" as homeDb
+  }
+}
+
+rectangle "Message\nBroker (Kafka)" as kafka
+
+gateway --> homeCtrl : Добавление/настройка дома
+gateway --> catalogCtrl : Просмотр каталога\nдевайсов у дома
+gateway --> provCtrl : Привязка/отвязка\nдевайсов к дому
+
+homeCtrl --> homeMgmtSvc : вызов
+catalogCtrl --> catalogSvc : вызов
+provCtrl --> provSvc : вызов
+
+homeMgmtSvc --> homeRepo : сохраняет данные\nо доме
+homeRepo --> homeDb : запись в БД
+
+catalogSvc --> deviceRepo : просмотр устройств\nпривязанных к дому
+deviceRepo --> homeDb : запись/чтение\nиз БД
+
+provSvc --> deviceRepo : сохранение привязанных\nустройств
+provSvc --> kafka : отправка событий\nо привязке устройства к дому
+@enduml

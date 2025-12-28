@@ -1,0 +1,180 @@
+@startuml
+title Smart Home Ecosystem — ER Diagram (Key Entities)
+
+hide circle
+skinparam linetype ortho
+skinparam shadowing false
+
+entity "User" as user {
+  * id : UUID <<PK>>
+  --
+  email : varchar
+  password_hash : varchar
+  status : varchar
+  created_at : datetime
+  updated_at : datetime
+}
+
+entity "Home" as home {
+  * id : UUID <<PK>>
+  --
+  name : varchar
+  address : varchar
+  region : varchar
+  created_at : datetime
+  updated_at : datetime
+}
+
+entity "HomeMember" as member {
+  * id : UUID <<PK>>
+  --
+  home_id : UUID <<FK>>
+  user_id : UUID <<FK>>
+  role : varchar
+  created_at : datetime
+}
+
+entity "Room" as room {
+  * id : UUID <<PK>>
+  --
+  home_id : UUID <<FK>>
+  name : varchar
+  floor : int
+}
+
+entity "DeviceType" as dtype {
+  * id : UUID <<PK>>
+  --
+  name : varchar
+  category : varchar  'heating/light/gates/surveillance
+  capabilities : json
+}
+
+entity "Device" as device {
+  * id : UUID <<PK>>
+  --
+  device_type_id : UUID <<FK>>
+  vendor : varchar
+  model : varchar
+  serial_number : varchar
+  protocol : varchar   'MQTT/Zigbee/Matter/HTTP
+  status : varchar     'active/offline/disabled
+  created_at : datetime
+}
+
+entity "DeviceBinding" as binding {
+  * id : UUID <<PK>>
+  --
+  home_id : UUID <<FK>>
+  device_id : UUID <<FK>>
+  room_id : UUID <<FK>>
+  display_name : varchar
+  bind_status : varchar  'paired/bound/unbound
+  bound_at : datetime
+}
+
+entity "DeviceConfig" as config {
+  * id : UUID <<PK>>
+  --
+  device_id : UUID <<FK>>
+  version : int
+  config_json : json
+  updated_at : datetime
+}
+
+entity "HeatingState" as heat_state {
+  * id : UUID <<PK>>
+  --
+  device_id : UUID <<FK>>
+  home_id : UUID <<FK>>
+  current_temp : decimal
+  target_temp : decimal
+  mode : varchar        'off/auto/manual
+  updated_at : datetime
+}
+
+entity "TemperatureTelemetry" as telemetry {
+  * id : UUID <<PK>>
+  --
+  device_id : UUID <<FK>>
+  home_id : UUID <<FK>>
+  temperature : decimal
+  recorded_at : datetime
+}
+
+entity "GateState" as gate_state {
+  * id : UUID <<PK>>
+  --
+  device_id : UUID <<FK>>
+  home_id : UUID <<FK>>
+  locked : boolean
+  opened : boolean
+  updated_at : datetime
+}
+
+entity "LightState" as light_state {
+  * id : UUID <<PK>>
+  --
+  device_id : UUID <<FK>>
+  home_id : UUID <<FK>>
+  is_on : boolean
+  brightness : int
+  updated_at : datetime
+}
+
+entity "Camera" as camera {
+  * id : UUID <<PK>>
+  --
+  device_id : UUID <<FK>>
+  home_id : UUID <<FK>>
+  stream_url : varchar
+  enabled : boolean
+}
+
+entity "Recording" as recording {
+  * id : UUID <<PK>>
+  --
+  camera_id : UUID <<FK>>
+  home_id : UUID <<FK>>
+  storage_url : varchar
+  started_at : datetime
+  ended_at : datetime
+}
+
+'===========================
+' RELATIONSHIPS
+'===========================
+
+user ||--o{ member : "has"
+home ||--o{ member : "includes"
+
+home ||--o{ room : "contains"
+
+dtype ||--o{ device : "defines"
+
+home ||--o{ binding : "binds"
+device ||--o{ binding : "is bound via"
+room ||--o{ binding : "assigned to"
+
+device ||--o{ config : "has configs"
+
+' Domain-specific state tables (can be separate DBs per service)
+device ||--o{ heat_state : "heating"
+home ||--o{ heat_state : "in home"
+
+device ||--o{ telemetry : "reports"
+home ||--o{ telemetry : "in home"
+
+device ||--o{ gate_state : "gates"
+home ||--o{ gate_state : "in home"
+
+device ||--o{ light_state : "lighting"
+home ||--o{ light_state : "in home"
+
+device ||--o{ camera : "camera"
+home ||--o{ camera : "in home"
+
+camera ||--o{ recording : "records"
+home ||--o{ recording : "in home"
+
+@enduml

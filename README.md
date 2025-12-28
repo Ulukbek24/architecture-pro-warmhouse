@@ -72,19 +72,30 @@
 Чтобы добавить ссылку в файл Readme.md, нужно использовать синтаксис Markdown. Это делают так:
 
 ```markdown
-[Диаграммы](https://miro.com/app/board/uXjVGbIYS6A=/)
+https://github.com/Ulukbek24/architecture-pro-warmhouse/schemas/c4_diagrams/context.puml
 ```
 
 # Задание 2. Проектирование микросервисной архитектуры
 
+Диаграмма контейнеров (Containers)
 ```markdown
-[Диаграммы](https://miro.com/app/board/uXjVGbIYS6A=/)
+https://github.com/Ulukbek24/architecture-pro-warmhouse/schemas/c4_diagrams/containers.puml
+```
+
+Диаграмма компонентов (Components)
+```markdown
+https://github.com/Ulukbek24/architecture-pro-warmhouse/schemas/c4_diagrams/components
+```
+
+Диаграмма кода (Code)
+```markdown
+https://github.com/Ulukbek24/architecture-pro-warmhouse/schemas/c4_diagrams/auth_code.puml
 ```
 
 # Задание 3. Разработка ER-диаграммы
 
 ```markdown
-[Диаграммы](https://miro.com/app/board/uXjVGbIYS6A=/)
+https://github.com/Ulukbek24/architecture-pro-warmhouse/schemas/c4_diagrams/er-diagram.puml
 ```
 
 # Задание 4. Создание и документирование API

@@ -1,0 +1,75 @@
+@startuml
+title Temperature Service — Component Diagram
+
+skinparam shadowing false
+skinparam DefaultFontName Arial
+skinparam DefaultFontSize 14
+skinparam ArrowColor #444444
+
+skinparam rectangle {
+  BackgroundColor #1F4E79
+  BorderColor #0B2C4D
+  FontColor white
+}
+skinparam component {
+  BackgroundColor #1F4E79
+  BorderColor #0B2C4D
+  FontColor white
+}
+skinparam database {
+  BackgroundColor #1F4E79
+  BorderColor #0B2C4D
+  FontColor white
+}
+skinparam actor {
+  BackgroundColor #1F4E79
+  BorderColor #0B2C4D
+  FontColor white
+}
+
+actor "Person\nUser\n\nВзаимодействует\nчерез веб-браузер" as user
+
+rectangle "API Gateway\n(Container)\n\nAPI Gateway\n(Nginx)\n\nУправляет запросами и маршрутизирует\nих на соответствующие сервисы" as gateway
+
+user --> gateway : Отправляет запросы\nи получает ответы
+
+rectangle "Temperature service" as tempBoundary #transparent {
+
+  rectangle "Temperature service\n(Container)" as tempContainer #transparent {
+
+    component "TemperatureController\n(REST API)" as tempCtrl
+    component "TemperatureStatus\n(REST API)" as tempStatus
+
+    component "TemperatureControlService\n(Use Cases)" as tempSvc
+
+    component "TemperatureRepository" as tempRepo
+    component "DeviceRepository" as deviceRepo
+
+    component "DeviceConsumer" as deviceConsumer
+    component "DeviceGateway" as deviceGateway
+
+    database "Temperature DB\n(Postgres)" as tempDb
+  }
+}
+
+rectangle "Message\nBroker (Kafka)" as kafka
+rectangle "ThirdPartyDevice" as thirdPartyDevice
+
+gateway --> tempCtrl : Настройка температуры
+gateway --> tempStatus : Просмотр температуры
+
+tempCtrl --> tempSvc : Изменения температуры
+tempStatus --> tempSvc : Просмотр температуры
+
+tempSvc --> tempRepo : Запись в БД
+tempRepo --> tempDb : Запись в БД
+
+tempSvc --> deviceRepo : Запись/чтение в БД
+deviceRepo --> tempDb : Запись/чтение в БД
+
+kafka --> deviceConsumer : Собирает инфу\nо привязке устройств
+deviceConsumer --> deviceRepo : Записывает данные\nо подключенных устройствах
+
+deviceConsumer --> deviceGateway : Отправляет запрос\nна подключение
+deviceGateway --> thirdPartyDevice : Отправляет запрос\nна подключение
+@enduml
