@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -13,16 +14,43 @@ type TemperatureService struct {
 	HTTPClient *http.Client
 }
 
+// ISOTime is a custom type for parsing ISO 8601 timestamps without timezone
+type ISOTime struct {
+	time.Time
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface
+func (t *ISOTime) UnmarshalJSON(b []byte) error {
+	s := strings.Trim(string(b), `"`)
+	// Try formats that Python's isoformat() might produce
+	formats := []string{
+		"2006-01-02T15:04:05.999999",
+		"2006-01-02T15:04:05.999999999",
+		"2006-01-02T15:04:05",
+		time.RFC3339,
+		time.RFC3339Nano,
+	}
+	
+	for _, format := range formats {
+		if parsedTime, err := time.Parse(format, s); err == nil {
+			t.Time = parsedTime
+			return nil
+		}
+	}
+	
+	return fmt.Errorf("failed to parse timestamp: %s", s)
+}
+
 // TemperatureResponse represents the response from the temperature API
 type TemperatureResponse struct {
-	Value       float64   `json:"value"`
-	Unit        string    `json:"unit"`
-	Timestamp   time.Time `json:"timestamp"`
-	Location    string    `json:"location"`
-	Status      string    `json:"status"`
-	SensorID    string    `json:"sensor_id"`
-	SensorType  string    `json:"sensor_type"`
-	Description string    `json:"description"`
+	Value       float64  `json:"value"`
+	Unit        string   `json:"unit"`
+	Timestamp   ISOTime  `json:"timestamp"`
+	Location    string   `json:"location"`
+	Status      string   `json:"status"`
+	SensorID    string   `json:"sensor_id"`
+	SensorType  string   `json:"sensor_type"`
+	Description string   `json:"description"`
 }
 
 // NewTemperatureService creates a new temperature service
