@@ -72,30 +72,30 @@
 Чтобы добавить ссылку в файл Readme.md, нужно использовать синтаксис Markdown. Это делают так:
 
 ```markdown
-https://github.com/Ulukbek24/architecture-pro-warmhouse/schemas/c4_diagrams/context.puml
+https://github.com/Ulukbek24/architecture-pro-warmhouse/tree/warmhouse/schemas/c4_diagrams/context.puml
 ```
 
 # Задание 2. Проектирование микросервисной архитектуры
 
 Диаграмма контейнеров (Containers)
 ```markdown
-https://github.com/Ulukbek24/architecture-pro-warmhouse/schemas/c4_diagrams/containers.puml
+https://github.com/Ulukbek24/architecture-pro-warmhouse/tree/warmhouse/schemas/c4_diagrams/containers.puml
 ```
 
 Диаграмма компонентов (Components)
 ```markdown
-https://github.com/Ulukbek24/architecture-pro-warmhouse/schemas/c4_diagrams/components
+https://github.com/Ulukbek24/architecture-pro-warmhouse/tree/warmhouse/schemas/c4_diagrams/components
 ```
 
 Диаграмма кода (Code)
 ```markdown
-https://github.com/Ulukbek24/architecture-pro-warmhouse/schemas/c4_diagrams/auth_code.puml
+https://github.com/Ulukbek24/architecture-pro-warmhouse/tree/warmhouse/schemas/c4_diagrams/auth_code.puml
 ```
 
 # Задание 3. Разработка ER-диаграммы
 
 ```markdown
-https://github.com/Ulukbek24/architecture-pro-warmhouse/schemas/c4_diagrams/er-diagram.puml
+https://github.com/Ulukbek24/architecture-pro-warmhouse/tree/warmhouse/schemas/c4_diagrams/er-diagram.puml
 ```
 
 # Задание 4. Создание и документирование API
@@ -109,7 +109,7 @@ https://github.com/Ulukbek24/architecture-pro-warmhouse/schemas/c4_diagrams/er-d
 ### 2. Документация API
 
 ```markdown
-[Сваггер](https://github.com/Ulukbek24/architecture-pro-warmhouse/schemas/openapi)
+[Сваггер](https://github.com/Ulukbek24/architecture-pro-warmhouse/tree/warmhouse/schemas/openapi)
 ```
 
 # Задание 5. Работа с docker и docker-compose
