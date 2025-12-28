@@ -1,0 +1,163 @@
+openapi: 3.0.3
+info:
+  title: Temperature (Heating) Service API
+  version: 1.0.0
+  description: Temperature control, heating state and telemetry.
+
+servers:
+  - url: http://localhost:8083
+
+tags:
+  - name: Temperature
+  - name: Telemetry
+
+paths:
+  /devices/{deviceId}/temperature/target:
+    post:
+      tags: [Temperature]
+      summary: Set target temperature for device
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/DeviceId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SetTargetTemperatureRequest' }
+      responses:
+        '202':
+          description: Command accepted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CommandAcceptedResponse' }
+        '404':
+          description: Device not found
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetails' }
+
+  /devices/{deviceId}/temperature/mode:
+    post:
+      tags: [Temperature]
+      summary: Set heating mode
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/DeviceId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SetModeRequest' }
+      responses:
+        '202':
+          description: Command accepted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CommandAcceptedResponse' }
+
+  /devices/{deviceId}/temperature/state:
+    get:
+      tags: [Temperature]
+      summary: Get current temperature state
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/DeviceId' }]
+      responses:
+        '200':
+          description: Current state
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TemperatureState' }
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetails' }
+
+  /devices/{deviceId}/telemetry/temperature:
+    get:
+      tags: [Telemetry]
+      summary: Get temperature telemetry
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/DeviceId' }
+        - name: from
+          in: query
+          required: false
+          schema: { type: string, format: date-time }
+        - name: to
+          in: query
+          required: false
+          schema: { type: string, format: date-time }
+        - name: limit
+          in: query
+          required: false
+          schema: { type: integer, default: 200, maximum: 1000 }
+      responses:
+        '200':
+          description: Telemetry list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/TemperatureTelemetry' }
+
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+
+  parameters:
+    DeviceId:
+      name: deviceId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  schemas:
+    SetTargetTemperatureRequest:
+      type: object
+      required: [targetTemp]
+      properties:
+        targetTemp: { type: number, format: float, example: 23.5 }
+        commandId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional idempotency key
+
+    SetModeRequest:
+      type: object
+      required: [mode]
+      properties:
+        mode: { type: string, enum: [OFF, AUTO, MANUAL] }
+        commandId: { type: string, format: uuid, nullable: true }
+
+    CommandAcceptedResponse:
+      type: object
+      properties:
+        commandId: { type: string, format: uuid }
+        status: { type: string, example: "ACCEPTED" }
+        acceptedAt: { type: string, format: date-time }
+
+    TemperatureState:
+      type: object
+      properties:
+        deviceId: { type: string, format: uuid }
+        homeId: { type: string, format: uuid }
+        currentTemp: { type: number, format: float, example: 21.2 }
+        targetTemp: { type: number, format: float, example: 23.5 }
+        mode: { type: string, enum: [OFF, AUTO, MANUAL] }
+        updatedAt: { type: string, format: date-time }
+
+    TemperatureTelemetry:
+      type: object
+      properties:
+        deviceId: { type: string, format: uuid }
+        homeId: { type: string, format: uuid }
+        temperature: { type: number, format: float }
+        recordedAt: { type: string, format: date-time }
+
+    ProblemDetails:
+      type: object
+      properties:
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        traceId: { type: string }

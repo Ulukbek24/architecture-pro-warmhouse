@@ -1,0 +1,96 @@
+@startuml
+title Auth Service — Component Diagram
+
+' ==========================
+' STYLE
+' ==========================
+skinparam shadowing false
+skinparam DefaultFontName Arial
+skinparam DefaultFontSize 14
+skinparam ArrowColor #444444
+
+skinparam rectangle {
+  BackgroundColor #1F4E79
+  BorderColor #0B2C4D
+  FontColor white
+}
+skinparam component {
+  BackgroundColor #1F4E79
+  BorderColor #0B2C4D
+  FontColor white
+}
+skinparam database {
+  BackgroundColor #1F4E79
+  BorderColor #0B2C4D
+  FontColor white
+}
+skinparam actor {
+  BackgroundColor #1F4E79
+  BorderColor #0B2C4D
+  FontColor white
+}
+
+' ==========================
+' ACTOR + GATEWAY
+' ==========================
+actor "Person\nUser\n\nВзаимодействует\nчерез веб-браузер" as user
+
+rectangle "API Gateway\n(Container)\n\nAPI Gateway\n(Nginx)\n\nУправляет запросами и маршрутизирует\nих на соответствующие сервисы" as gateway
+
+user --> gateway : Отправляет запросы\nи получает ответы
+
+' ==========================
+' AUTH SERVICE BOUNDARY
+' ==========================
+rectangle "Auth service" as authBoundary #transparent {
+
+  rectangle "Auth service\n(Container)" as authContainer #transparent {
+
+    component "UserController\n(REST API)" as userCtrl
+    component "AuthController\n(REST API)" as authCtrl
+
+    component "AccessManagementService\n(Roles/Memberships)\n\nУправляет профилями/доступами" as accessSvc
+    component "AuthApplicationService\n(Use Cases)" as authAppSvc
+
+    component "UserRepository" as userRepo
+    component "SessionRepository" as sessionRepo
+
+    component "CredentialService\n(Password Hashing)\n\nПроверяет пароль/хэширует" as credSvc
+    component "TokenService\n(JWT/OAuth2)\n\nСоздаёт/проверяет токены" as tokenSvc
+
+    database "Auth DB\n(Postgres)" as authDb
+  }
+}
+
+' ==========================
+' GATEWAY -> CONTROLLERS
+' ==========================
+gateway --> authCtrl : Логин/регистрация
+gateway --> userCtrl : Профиль/доступы
+
+' ==========================
+' CONTROLLERS -> SERVICES
+' ==========================
+authCtrl --> authAppSvc : вызывает
+userCtrl --> accessSvc : вызывает
+
+' ==========================
+' AUTH APP FLOW
+' ==========================
+authAppSvc --> credSvc : проверяет пароль\n/хэширует
+authAppSvc --> tokenSvc : генерирует токены\n/проверяет токены
+authAppSvc --> sessionRepo : сохраняет refresh token
+
+' ==========================
+' ACCESS MANAGEMENT FLOW
+' ==========================
+accessSvc --> userRepo : сохраняет юзеров\n/профили
+accessSvc --> sessionRepo : сохраняет refresh token
+
+' ==========================
+' REPOSITORIES -> DB
+' ==========================
+userRepo --> authDb : записывает в БД
+sessionRepo --> authDb : записывает в БД
+
+@enduml

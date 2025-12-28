@@ -1,0 +1,137 @@
+openapi: 3.0.3
+info:
+  title: Gate Service API
+  version: 1.0.0
+  description: Control gates (open/close, lock/unlock) and provide current state.
+
+servers:
+  - url: http://localhost:8084
+
+tags:
+  - name: Gates
+
+paths:
+  /devices/{deviceId}/gates/open:
+    post:
+      tags: [Gates]
+      summary: Open gates
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/DeviceId' }]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GateCommandRequest' }
+      responses:
+        '202':
+          description: Command accepted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CommandAcceptedResponse' }
+
+  /devices/{deviceId}/gates/close:
+    post:
+      tags: [Gates]
+      summary: Close gates
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/DeviceId' }]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GateCommandRequest' }
+      responses:
+        '202':
+          description: Command accepted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CommandAcceptedResponse' }
+
+  /devices/{deviceId}/gates/lock:
+    post:
+      tags: [Gates]
+      summary: Lock gates
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/DeviceId' }]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GateCommandRequest' }
+      responses:
+        '202':
+          description: Command accepted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CommandAcceptedResponse' }
+
+  /devices/{deviceId}/gates/unlock:
+    post:
+      tags: [Gates]
+      summary: Unlock gates
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/DeviceId' }]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GateCommandRequest' }
+      responses:
+        '202':
+          description: Command accepted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CommandAcceptedResponse' }
+
+  /devices/{deviceId}/gates/state:
+    get:
+      tags: [Gates]
+      summary: Get current gate state
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/DeviceId' }]
+      responses:
+        '200':
+          description: Gate state
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GateState' }
+
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+
+  parameters:
+    DeviceId:
+      name: deviceId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  schemas:
+    GateCommandRequest:
+      type: object
+      properties:
+        commandId:
+          type: string
+          format: uuid
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+          example: "User pressed Open"
+
+    CommandAcceptedResponse:
+      type: object
+      properties:
+        commandId: { type: string, format: uuid }
+        status: { type: string, example: "ACCEPTED" }
+        acceptedAt: { type: string, format: date-time }
+
+    GateState:
+      type: object
+      properties:
+        deviceId: { type: string, format: uuid }
+        homeId: { type: string, format: uuid }
+        locked: { type: boolean, example: true }
+        opened: { type: boolean, example: false }
+        updatedAt: { type: string, format: date-time }

@@ -1,0 +1,176 @@
+@startuml
+title Auth Service — Code Diagram (Class Diagram)
+
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+package "com.warmhouse.auth.component.core" {
+
+  interface AuthenticationServiceFacade
+
+  class AuthenticationServiceFacadeImpl {
+    +register(req: RegisterRequest): RegisterResponse
+    +login(req: LoginRequest): LoginResponse
+    +refresh(req: RefreshRequest): RefreshResponse
+    +logout(req: LogoutRequest): void
+    +getProfile(req: ProfileRequest): ProfileResponse
+  }
+
+  class AuthApplicationService {
+    +register(email: String, password: String): UUID
+    +login(email: String, password: String): TokenPair
+    +refresh(refreshToken: String): AccessToken
+    +logout(userId: UUID): void
+    +getProfile(userId: UUID): User
+  }
+
+  class AccessManagementService {
+    +listHomes(userId: UUID): List<HomeMembership>
+    +hasRole(userId: UUID, homeId: UUID, role: HomeRole): boolean
+  }
+
+  class CredentialService {
+    +hashPassword(password: String): String
+    +verify(password: String, hash: String): boolean
+  }
+
+  class TokenService {
+    +issueAccessToken(userId: UUID, scopes: List<String>): String
+    +issueRefreshToken(userId: UUID): String
+    +verifyAccessToken(token: String): UUID
+    +verifyRefreshToken(token: String): UUID
+  }
+
+  interface UserRepository {
+    +findByEmail(email: String): User
+    +findById(userId: UUID): User
+    +save(user: User): void
+  }
+
+  interface SessionRepository {
+    +save(token: RefreshToken): void
+    +findByHash(hash: String): RefreshToken
+    +revokeAll(userId: UUID): void
+  }
+
+  class JwtTokenServiceImpl
+  class BcryptCredentialServiceImpl
+  class PostgresUserRepositoryImpl
+  class PostgresSessionRepositoryImpl
+
+  class User {
+    +id: UUID
+    +email: String
+    +passwordHash: String
+    +status: UserStatus
+    +createdAt: DateTime
+  }
+
+  enum UserStatus {
+    ACTIVE
+    BLOCKED
+    DELETED
+  }
+
+  class RefreshToken {
+    +id: UUID
+    +userId: UUID
+    +tokenHash: String
+    +expiresAt: DateTime
+    +revoked: boolean
+  }
+
+  class TokenPair {
+    +accessToken: String
+    +refreshToken: String
+    +expiresAt: DateTime
+  }
+
+  class RegisterRequest {
+    +email: String
+    +password: String
+  }
+
+  class RegisterResponse {
+    +userId: UUID
+  }
+
+  class LoginRequest {
+    +email: String
+    +password: String
+  }
+
+  class LoginResponse {
+    +accessToken: String
+    +refreshToken: String
+    +expiresAt: DateTime
+  }
+
+  class RefreshRequest {
+    +refreshToken: String
+  }
+
+  class RefreshResponse {
+    +accessToken: String
+    +expiresAt: DateTime
+  }
+
+  class LogoutRequest {
+    +userId: UUID
+  }
+
+  class ProfileRequest {
+    +accessToken: String
+  }
+
+  class ProfileResponse {
+    +userId: UUID
+    +email: String
+    +status: UserStatus
+  }
+
+  class AuthServiceException
+  class InvalidCredentialsException
+  class UserAlreadyExistsException
+  class TokenExpiredException
+  class UnauthorizedException
+
+  AuthServiceException <|-- InvalidCredentialsException
+  AuthServiceException <|-- UserAlreadyExistsException
+  AuthServiceException <|-- TokenExpiredException
+  AuthServiceException <|-- UnauthorizedException
+
+  AuthenticationServiceFacade <|.. AuthenticationServiceFacadeImpl
+
+  AuthenticationServiceFacadeImpl ..> RegisterRequest : <<creates>>
+  AuthenticationServiceFacadeImpl ..> LoginRequest : <<creates>>
+  AuthenticationServiceFacadeImpl ..> RefreshRequest : <<creates>>
+  AuthenticationServiceFacadeImpl ..> LogoutRequest : <<creates>>
+  AuthenticationServiceFacadeImpl ..> ProfileRequest : <<creates>>
+
+  AuthenticationServiceFacadeImpl ..> RegisterResponse : <<returns>>
+  AuthenticationServiceFacadeImpl ..> LoginResponse : <<returns>>
+  AuthenticationServiceFacadeImpl ..> RefreshResponse : <<returns>>
+  AuthenticationServiceFacadeImpl ..> ProfileResponse : <<returns>>
+
+  AuthenticationServiceFacadeImpl ..> AuthApplicationService : <<uses>>
+  AuthenticationServiceFacadeImpl ..> AccessManagementService : <<uses>>
+
+  AuthApplicationService ..> CredentialService : <<uses>>
+  AuthApplicationService ..> TokenService : <<uses>>
+  AuthApplicationService ..> UserRepository : <<uses>>
+  AuthApplicationService ..> SessionRepository : <<uses>>
+
+  UserRepository <|.. PostgresUserRepositoryImpl
+  SessionRepository <|.. PostgresSessionRepositoryImpl
+  TokenService <|.. JwtTokenServiceImpl
+  CredentialService <|.. BcryptCredentialServiceImpl
+
+  User "1" o-- "0..*" RefreshToken : issues >
+
+  AuthApplicationService ..> AuthServiceException : <<throws>>
+  AuthenticationServiceFacadeImpl ..> AuthServiceException : <<throws>>
+}
+
+@enduml

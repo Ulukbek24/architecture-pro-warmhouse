@@ -1,0 +1,103 @@
+openapi: 3.0.3
+info:
+  title: Light Service API
+  version: 1.0.0
+  description: Control lights (on/off, brightness) and provide current state.
+
+servers:
+  - url: http://localhost:8085
+
+tags:
+  - name: Lights
+
+paths:
+  /devices/{deviceId}/lights/switch:
+    post:
+      tags: [Lights]
+      summary: Switch light on/off
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/DeviceId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SwitchLightRequest' }
+      responses:
+        '202':
+          description: Command accepted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CommandAcceptedResponse' }
+
+  /devices/{deviceId}/lights/brightness:
+    post:
+      tags: [Lights]
+      summary: Set brightness (0..100)
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/DeviceId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SetBrightnessRequest' }
+      responses:
+        '202':
+          description: Command accepted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CommandAcceptedResponse' }
+
+  /devices/{deviceId}/lights/state:
+    get:
+      tags: [Lights]
+      summary: Get current light state
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/DeviceId' }]
+      responses:
+        '200':
+          description: Light state
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LightState' }
+
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+
+  parameters:
+    DeviceId:
+      name: deviceId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  schemas:
+    SwitchLightRequest:
+      type: object
+      required: [isOn]
+      properties:
+        isOn: { type: boolean, example: true }
+        commandId: { type: string, format: uuid, nullable: true }
+
+    SetBrightnessRequest:
+      type: object
+      required: [brightness]
+      properties:
+        brightness: { type: integer, minimum: 0, maximum: 100, example: 60 }
+        commandId: { type: string, format: uuid, nullable: true }
+
+    CommandAcceptedResponse:
+      type: object
+      properties:
+        commandId: { type: string, format: uuid }
+        status: { type: string, example: "ACCEPTED" }
+        acceptedAt: { type: string, format: date-time }
+
+    LightState:
+      type: object
+      properties:
+        deviceId: { type: string, format: uuid }
+        homeId: { type: string, format: uuid }
+        isOn: { type: boolean }
+        brightness: { type: integer }
+        updatedAt: { type: string, format: date-time }

@@ -1,0 +1,46 @@
+@startuml
+title Smart Home Ecosystem — Context Diagram (fixed layout)
+
+skinparam shadowing false
+skinparam rectangle {
+  BackgroundColor #1F4E79
+  BorderColor #0B2C4D
+  FontColor white
+}
+skinparam actor {
+  BackgroundColor #1F4E79
+  BorderColor #0B2C4D
+  FontColor white
+}
+skinparam ArrowColor #1F4E79
+skinparam DefaultFontName Arial
+skinparam DefaultFontSize 14
+
+top to bottom direction
+
+actor "Person\nUser\n\nВзаимодействует\nчерез веб-браузер" as user
+rectangle "API Gateway\n(Nginx)\n\nУправляет запросами и\nмаршрутизирует их\nна соответствующие сервисы" as gateway
+
+rectangle "<<system>>\n«Проверка подлинности пользователей»\nAuthentication Service" as auth
+rectangle "<<system>>\n«Управление домом»\nHome Management Service" as home
+rectangle "<<system>>\n«Управление температурой»\nTemperature Management Service" as temp
+rectangle "<<system>>\n«Управление светом»\nLight Management Service" as light
+rectangle "<<system>>\n«Управление видеокамерами»\nVideocameras Management Service" as video
+rectangle "<<system>>\n«Управление воротами»\nGates Management Service" as gates
+
+user --> gateway : HTTP-запросы
+
+gateway --> auth : Запросы на\nаутентификацию
+gateway --> home : Запросы на\nуправление домом
+gateway --> temp : Запросы на\nуправление температурой
+gateway --> light : Запросы на\nуправление светом
+gateway --> video : Запросы на\nуправление видеокамерами
+gateway --> gates : Запросы на\nуправление воротами
+
+' ---- Hidden links (layout helpers) ----
+auth -[hidden]-> home
+home -[hidden]-> temp
+temp -[hidden]-> light
+light -[hidden]-> video
+video -[hidden]-> gates
+@enduml

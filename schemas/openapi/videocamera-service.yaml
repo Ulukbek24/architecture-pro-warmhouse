@@ -1,0 +1,141 @@
+openapi: 3.0.3
+info:
+  title: VideoCamera (Surveillance) Service API
+  version: 1.0.0
+  description: Camera management, streaming sessions and recordings.
+
+servers:
+  - url: http://localhost:8086
+
+tags:
+  - name: Cameras
+  - name: Recordings
+
+paths:
+  /devices/{deviceId}/camera/enable:
+    post:
+      tags: [Cameras]
+      summary: Enable/disable camera
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/DeviceId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EnableCameraRequest' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CameraState' }
+
+  /devices/{deviceId}/camera/stream:
+    post:
+      tags: [Cameras]
+      summary: Create streaming session (returns streamUrl/token)
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/DeviceId' }]
+      responses:
+        '201':
+          description: Stream session created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StreamSessionResponse' }
+
+  /homes/{homeId}/recordings:
+    get:
+      tags: [Recordings]
+      summary: List recordings for home
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/HomeId' }]
+      responses:
+        '200':
+          description: Recordings list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Recording' }
+
+  /devices/{deviceId}/camera/record/start:
+    post:
+      tags: [Recordings]
+      summary: Start recording
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/DeviceId' }]
+      responses:
+        '202':
+          description: Recording started
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CommandAcceptedResponse' }
+
+  /devices/{deviceId}/camera/record/stop:
+    post:
+      tags: [Recordings]
+      summary: Stop recording
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/DeviceId' }]
+      responses:
+        '202':
+          description: Recording stopped
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CommandAcceptedResponse' }
+
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+
+  parameters:
+    DeviceId:
+      name: deviceId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    HomeId:
+      name: homeId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  schemas:
+    EnableCameraRequest:
+      type: object
+      required: [enabled]
+      properties:
+        enabled: { type: boolean, example: true }
+
+    CameraState:
+      type: object
+      properties:
+        deviceId: { type: string, format: uuid }
+        homeId: { type: string, format: uuid }
+        enabled: { type: boolean }
+        updatedAt: { type: string, format: date-time }
+
+    StreamSessionResponse:
+      type: object
+      properties:
+        deviceId: { type: string, format: uuid }
+        streamUrl: { type: string, example: "https://stream.example.com/hls/abc.m3u8" }
+        token: { type: string, nullable: true }
+        expiresAt: { type: string, format: date-time }
+
+    Recording:
+      type: object
+      properties:
+        recordingId: { type: string, format: uuid }
+        homeId: { type: string, format: uuid }
+        deviceId: { type: string, format: uuid }
+        startedAt: { type: string, format: date-time }
+        endedAt: { type: string, format: date-time, nullable: true }
+        storageUrl: { type: string, example: "s3://bucket/rec/123.mp4" }
+
+    CommandAcceptedResponse:
+      type: object
+      properties:
+        commandId: { type: string, format: uuid }
+        status: { type: string, example: "ACCEPTED" }
+        acceptedAt: { type: string, format: date-time }
